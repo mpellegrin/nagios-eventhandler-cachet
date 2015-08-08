@@ -16,19 +16,19 @@ A Nagios event handler to push Nagios notifications to Cachet API
 ## Configuration
 
  - Make a Nagios command:
-  ```
+```
   define command {
       command_name    cachet_notify
       command_line    /usr/share/nagios3/plugins/eventhandlers/cachet_notify '$ARG1$' '$SERVICEDESC$' '$SERVICESTATE$' '$SERVICESTATETYPE$' '$SERVICEOUTPUT$'
   }
-  ```
+```
  - Add an event handler on your services:
-  ```
+```
   define service {
       service_description             My nagios service
       ...
       event_handler                   cachet_notify!My Cachet component
   }
-  ```
+```
  - Restart nagios
 
