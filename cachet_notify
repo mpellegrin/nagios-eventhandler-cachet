@@ -136,7 +136,8 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'notify' => $cachet_notify_subscribers,
 		'component_status' => 3,
 	);
-	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
+	/* Use a POST query as that will keep an incident history */
+	$result = cachet_query('incidents', 'POST', $query);
 	if ($result['code'] != 200) {
 		echo 'Can\'t update incident' . "\n";
 		exit(1);
@@ -170,7 +171,8 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'notify' => $cachet_notify_subscribers,
 		'component_status' => 1,
 	);
-	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
+	/* Use a POST query as that will keep an incident history */
+	$result = cachet_query('incidents', 'POST', $query);
 	if ($result['code'] != 200) {
 		echo 'Can\'t update incident' . "\n";
 		exit(1);
