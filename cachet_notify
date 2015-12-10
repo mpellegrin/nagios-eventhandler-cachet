@@ -23,6 +23,11 @@ define('CATCHET_STATUS_IDENTIFIED', 2);
 define('CATCHET_STATUS_WATCHING', 3);
 define('CATCHET_STATUS_FIXED', 4);
 
+define('CACHET_COMPONENTSTATUS_OK', 1);
+define('CACHET_COMPONENTSTATUS_INVESTIGATING', 2);
+define('CACHET_COMPONENTSTATUS_PARTIALOUTAGE', 3);
+define('CACHET_COMPONENTSTATUS_MAJOROUTAGE', 4);
+
 
 function cachet_query($api_part, $action = 'GET', $data = null) {
 	global $api_key, $cachet_url;
@@ -95,6 +100,7 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'status' => CATCHET_STATUS_INVESTIGATING,
 		'component_id' => $cachet_component_id,
 		'notify' => $cachet_notify_subscribers,
+		'component_status' => 4,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
 	if ($result['code'] != 200) {
@@ -128,6 +134,7 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'status' => CATCHET_STATUS_WATCHING,
 		'component_id' => $cachet_component_id,
 		'notify' => $cachet_notify_subscribers,
+		'component_status' => 3,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
 	if ($result['code'] != 200) {
@@ -161,6 +168,7 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'status' => CATCHET_STATUS_FIXED,
 		'component_id' => $cachet_component_id,
 		'notify' => $cachet_notify_subscribers,
+		'component_status' => 1,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
 	if ($result['code'] != 200) {
