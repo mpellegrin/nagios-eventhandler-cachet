@@ -6,11 +6,12 @@ if ($argc != 6) {
 	exit(1);
 }
 
-$cachet_url = 'http://xxxx/api/v1/';
+$cachet_url = 'https://xxxx/api/v1/';
 $api_key = 'xxxx';
 
 $incident_prefix = '[Nagios]';
 $cachet_notify_subscribers = true; // Enable subscribers notifcation for incidents creation and updates
+$cachet_incident_visible = true;
 
 $cachet_component = $argv[1];
 $service_name = $argv[2];
@@ -23,12 +24,18 @@ define('CATCHET_STATUS_IDENTIFIED', 2);
 define('CATCHET_STATUS_WATCHING', 3);
 define('CATCHET_STATUS_FIXED', 4);
 
+define('CATCHET_COMPONENT_STATUS_OPERATIONAL', 1);
+define('CATCHET_COMPONENT_STATUS_PERFORMANCE_ISSUES', 2);
+define('CATCHET_COMPONENT_STATUS_PARTIAL_OUTAGE', 3);
+define('CATCHET_COMPONENT_STATUS_MAJOR_OUTAGE', 4);
 
 function cachet_query($api_part, $action = 'GET', $data = null) {
 	global $api_key, $cachet_url;
 
+        print_r($data);
+
 	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $cachet_url . $api_part); 
+	curl_setopt($ch, CURLOPT_URL, $cachet_url . $api_part);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -51,7 +58,7 @@ function cachet_query($api_part, $action = 'GET', $data = null) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return body
 	$http_body = curl_exec($ch);
 	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	curl_close($ch); 
+	curl_close($ch);
 
 	return array('code' => $http_code, 'body' => json_decode($http_body));
 }
@@ -93,7 +100,9 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CATCHET_STATUS_INVESTIGATING,
+                'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
+                'component_status' => CATCHET_COMPONENT_STATUS_MAJOR_OUTAGE,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -126,7 +135,9 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CATCHET_STATUS_WATCHING,
+                'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
+                'component_status' => CATCHET_COMPONENT_STATUS_PARTIAL_OUTAGE,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
@@ -159,7 +170,9 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CATCHET_STATUS_FIXED,
+                'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
+                'component_status' => CATCHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
