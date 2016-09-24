@@ -19,15 +19,15 @@ $service_status = $argv[3];
 $service_status_type = $argv[4];
 $service_output = $argv[5];
 
-define('CATCHET_STATUS_INVESTIGATING', 1);
-define('CATCHET_STATUS_IDENTIFIED', 2);
-define('CATCHET_STATUS_WATCHING', 3);
-define('CATCHET_STATUS_FIXED', 4);
+define('CACHET_STATUS_INVESTIGATING', 1);
+define('CACHET_STATUS_IDENTIFIED', 2);
+define('CACHET_STATUS_WATCHING', 3);
+define('CACHET_STATUS_FIXED', 4);
 
-define('CATCHET_COMPONENT_STATUS_OPERATIONAL', 1);
-define('CATCHET_COMPONENT_STATUS_PERFORMANCE_ISSUES', 2);
-define('CATCHET_COMPONENT_STATUS_PARTIAL_OUTAGE', 3);
-define('CATCHET_COMPONENT_STATUS_MAJOR_OUTAGE', 4);
+define('CACHET_COMPONENT_STATUS_OPERATIONAL', 1);
+define('CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES', 2);
+define('CACHET_COMPONENT_STATUS_PARTIAL_OUTAGE', 3);
+define('CACHET_COMPONENT_STATUS_MAJOR_OUTAGE', 4);
 
 function cachet_query($api_part, $action = 'GET', $data = null) {
 	global $api_key, $cachet_url;
@@ -99,10 +99,10 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	$query = array(
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
-		'status' => CATCHET_STATUS_INVESTIGATING,
+		'status' => CACHET_STATUS_INVESTIGATING,
                 'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CATCHET_COMPONENT_STATUS_MAJOR_OUTAGE,
+                'component_status' => CACHET_COMPONENT_STATUS_MAJOR_OUTAGE,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -134,10 +134,10 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	$query = array(
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
-		'status' => CATCHET_STATUS_WATCHING,
+		'status' => CACHET_STATUS_WATCHING,
                 'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CATCHET_COMPONENT_STATUS_PARTIAL_OUTAGE,
+                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
@@ -169,10 +169,10 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	$query = array(
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
-		'status' => CATCHET_STATUS_FIXED,
+		'status' => CACHET_STATUS_FIXED,
                 'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CATCHET_COMPONENT_STATUS_OPERATIONAL,
+                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
