@@ -60,7 +60,6 @@ function cachet_query($api_part, $action = 'GET', $data = null) {
 /* Find Cachet component ID */
 $result = cachet_query('components');
 if ($result['code'] != 200) {
-	echo $result['code'] ."\n";
 	echo 'Can\'t query components' . "\n";
 	exit(1);
 }
@@ -101,7 +100,6 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	);
 	$result = cachet_query('incidents', 'POST', $query);
 	if ($result['code'] != 200) {
-		print $query['name'] . ':' . $query['message'] . ':' . $query['status'] . ':' . $query['component_id'] . ':' . $query['notify'] . ":" . $query['component_status'];
 		echo 'Can\'t create incident' . "\n";
 		exit(1);
 	}
@@ -110,7 +108,6 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	/* Get the incident ID */
 	$results = cachet_query('incidents');
 	if ($result['code'] != 200) {
-		echo $result['code'] . "\n";
 		echo 'Can\'t get incidents' . "\n";
 		exit(1);
 	}
