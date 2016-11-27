@@ -6,7 +6,7 @@ if ($argc != 6) {
 	exit(1);
 }
 
-$cachet_url = 'https://xxxxx';
+$cachet_url = 'https://xxxxx/api/v1/';
 $api_key = 'xxxxx';
 
 $incident_prefix = '[Nagios]';
