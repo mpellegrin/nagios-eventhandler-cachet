@@ -1,4 +1,4 @@
-#!/usr/bin/php5
+#!/usr/bin/php
 <?php
 
 if ($argc != 6) {
@@ -6,8 +6,8 @@ if ($argc != 6) {
 	exit(1);
 }
 
-$cachet_url = 'https://xxxx/api/v1/';
-$api_key = 'xxxx';
+$cachet_url = 'https://xxxxx/api/v1/';
+$api_key = 'xxxxx';
 
 $incident_prefix = '[Nagios]';
 $cachet_notify_subscribers = true; // Enable subscribers notifcation for incidents creation and updates
@@ -91,10 +91,41 @@ Determine what to to:
 PROBLEM = !OK = (WARNING | CRITICAL | UNKONWN)
 RECOVERY = OK
 */
-if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will be back soon
-	echo 'KO SOFT: not doing anything' . "\n";
-	exit(0);
-} elseif ($service_status != 'OK' && $service_status_type == 'HARD') { // Something went wrong, let's notify
+if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_status_type == 'HARD')) { // Hope it will be back soon
+	//echo 'KO SOFT: not doing anything' . "\n";
+	//exit(0);
+        echo 'WARNING SOFT: creating incident' . "\n";
+        $query = array(
+                'name' => $incident_prefix . ' ' . $service_name,
+                'message' => $service_output,
+                'status' => CACHET_STATUS_WATCHING,
+                'visible' => $cachet_incident_visible,
+                'component_id' => $cachet_component_id,
+                'component_status' => CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES,
+                'notify' => $cachet_notify_subscribers,
+        );
+        $result = cachet_query('incidents', 'POST', $query);
+        if ($result['code'] != 200) {
+                echo 'Can\'t create incident' . "\n";
+                exit(1);
+        }
+} elseif ($service_status == 'CRITICAL' && $service_status_type == 'SOFT') { // Something went wrong, let's notify
+	echo 'KO HARD: creating incident' . "\n";
+	$query = array(
+		'name' => $incident_prefix . ' ' . $service_name,
+		'message' => $service_output,
+		'status' => CACHET_STATUS_WATCHING,
+                'visible' => $cachet_incident_visible,
+		'component_id' => $cachet_component_id,
+                'component_status' => CACHET_COMPONENT_STATUS_PARTIAL_OUTAGE,
+		'notify' => $cachet_notify_subscribers,
+	);
+	$result = cachet_query('incidents', 'POST', $query);
+	if ($result['code'] != 200) {
+		echo 'Can\'t create incident' . "\n";
+		exit(1);
+	}
+} elseif ($service_status == 'CRITICAL' && $service_status_type == 'HARD') { // Something went wrong, let's notify
 	echo 'KO HARD: creating incident' . "\n";
 	$query = array(
 		'name' => $incident_prefix . ' ' . $service_name,
@@ -111,6 +142,22 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		exit(1);
 	}
 } elseif ($service_status == 'OK' && $service_status_type == 'SOFT') { // Recovery underway
+	echo 'OK Soft: creating incident' . "\n";
+	$query = array(
+		'name' => $incident_prefix . ' ' . $service_name,
+		'message' => $service_output,
+		'status' => CACHET_STATUS_FIXED,
+                'visible' => $cachet_incident_visible,
+		'component_id' => $cachet_component_id,
+                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'notify' => $cachet_notify_subscribers,
+	);
+	$result = cachet_query('incidents', 'POST', $query);
+	if ($result['code'] != 200) {
+		echo 'Can\'t create incident' . "\n";
+		exit(1);
+	}
+
 	echo 'OK SOFT: updating incident' . "\n";
 	/* Get the incident ID */
 	$results = cachet_query('incidents');
@@ -120,7 +167,7 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	}
 	$cachet_incident_id = false;
 	foreach ($results['body']->data as $incident) {
-		if ($incident->name == $incident_prefix . ' ' . $service_name) {
+		if (($incident->name == $incident_prefix . ' ' . $service_name) and ($incident->status != CACHET_STATUS_FIXED)) {
 			$cachet_incident_id = $incident->id;
 			break; // Yes, bad.
 		}
@@ -132,13 +179,14 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 
 	/* Update the incident */
 	$query = array(
-		'name' => $incident_prefix . ' ' . $service_name,
-		'message' => $service_output,
-		'status' => CACHET_STATUS_WATCHING,
+		//'name' => $incident_prefix . ' ' . $service_name,
+		//'message' => $service_output,
+		'status' => CACHET_STATUS_FIXED,
                 'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
                 'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
+		// 'id' => $cachet_incident_id,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
 	if ($result['code'] != 200) {
@@ -146,6 +194,22 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		exit(1);
 	}
 } elseif ($service_status == 'OK' && $service_status_type == 'HARD') { // Recovery completed
+	echo 'OK Hard: creating incident' . "\n";
+	$query = array(
+		'name' => $incident_prefix . ' ' . $service_name,
+		'message' => $service_output,
+		'status' => CACHET_STATUS_FIXED,
+                'visible' => $cachet_incident_visible,
+		'component_id' => $cachet_component_id,
+                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'notify' => $cachet_notify_subscribers,
+	);
+	$result = cachet_query('incidents', 'POST', $query);
+	if ($result['code'] != 200) {
+		echo 'Can\'t create incident' . "\n";
+		exit(1);
+	}
+
 	echo 'OK HARD: updating incident' . "\n";
 	/* Get the incident ID */
 	$results = cachet_query('incidents');
@@ -155,8 +219,9 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 	}
 	$cachet_incident_id = false;
 	foreach ($results['body']->data as $incident) {
-		if ($incident->name == $incident_prefix . ' ' . $service_name) {
+		if (($incident->name == $incident_prefix . ' ' . $service_name) and ($incident->status != CACHET_STATUS_FIXED)) {
 			$cachet_incident_id = $incident->id;
+			file_put_contents('/tmp/testing.txt', $cachet_indicent_id . "\n" . $incident->id);
 			break; // Yes, bad.
 		}
 	}
@@ -174,6 +239,7 @@ if ($service_status != 'OK' && $service_status_type == 'SOFT') { // Hope it will
 		'component_id' => $cachet_component_id,
                 'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
+		// 'id' => $cachet_incident_id,
 	);
 	$result = cachet_query('incidents/' . $cachet_incident_id, 'PUT', $query);
 	if ($result['code'] != 200) {
