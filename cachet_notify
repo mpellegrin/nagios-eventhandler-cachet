@@ -32,7 +32,7 @@ define('CACHET_COMPONENT_STATUS_MAJOR_OUTAGE', 4);
 function cachet_query($api_part, $action = 'GET', $data = null) {
 	global $api_key, $cachet_url;
 
-        print_r($data);
+	print_r($data);
 
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $cachet_url . $api_part);
@@ -94,30 +94,30 @@ RECOVERY = OK
 if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_status_type == 'HARD')) { // Hope it will be back soon
 	//echo 'KO SOFT: not doing anything' . "\n";
 	//exit(0);
-        echo 'WARNING SOFT: creating incident' . "\n";
-        $query = array(
-                'name' => $incident_prefix . ' ' . $service_name,
-                'message' => $service_output,
-                'status' => CACHET_STATUS_WATCHING,
-                'visible' => $cachet_incident_visible,
-                'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES,
-                'notify' => $cachet_notify_subscribers,
-        );
-        $result = cachet_query('incidents', 'POST', $query);
-        if ($result['code'] != 200) {
-                echo 'Can\'t create incident' . "\n";
-                exit(1);
-        }
+	echo 'WARNING SOFT: creating incident' . "\n";
+	$query = array(
+		'name' => $incident_prefix . ' ' . $service_name,
+		'message' => $service_output,
+		'status' => CACHET_STATUS_WATCHING,
+		'visible' => $cachet_incident_visible,
+		'component_id' => $cachet_component_id,
+		'component_status' => CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES,
+		'notify' => $cachet_notify_subscribers,
+	);
+	$result = cachet_query('incidents', 'POST', $query);
+	if ($result['code'] != 200) {
+		echo 'Can\'t create incident' . "\n";
+		exit(1);
+	}
 } elseif ($service_status == 'CRITICAL' && $service_status_type == 'SOFT') { // Something went wrong, let's notify
 	echo 'KO HARD: creating incident' . "\n";
 	$query = array(
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CACHET_STATUS_WATCHING,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_PARTIAL_OUTAGE,
+		'component_status' => CACHET_COMPONENT_STATUS_PARTIAL_OUTAGE,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -131,9 +131,9 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CACHET_STATUS_INVESTIGATING,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_MAJOR_OUTAGE,
+		'component_status' => CACHET_COMPONENT_STATUS_MAJOR_OUTAGE,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -147,9 +147,9 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CACHET_STATUS_FIXED,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -182,9 +182,9 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		//'name' => $incident_prefix . ' ' . $service_name,
 		//'message' => $service_output,
 		'status' => CACHET_STATUS_FIXED,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 		// 'id' => $cachet_incident_id,
 	);
@@ -199,9 +199,9 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CACHET_STATUS_FIXED,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 	);
 	$result = cachet_query('incidents', 'POST', $query);
@@ -235,9 +235,9 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		'name' => $incident_prefix . ' ' . $service_name,
 		'message' => $service_output,
 		'status' => CACHET_STATUS_FIXED,
-                'visible' => $cachet_incident_visible,
+		'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
+		'component_status' => CACHET_COMPONENT_STATUS_OPERATIONAL,
 		'notify' => $cachet_notify_subscribers,
 		// 'id' => $cachet_incident_id,
 	);
