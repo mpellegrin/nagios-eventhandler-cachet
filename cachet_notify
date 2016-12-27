@@ -6,18 +6,28 @@ if ($argc != 6) {
 	exit(1);
 }
 
-$cachet_url = 'https://xxxxx/api/v1/';
-$api_key = 'xxxxx';
+$cachet_url = 'https://xxxxxx/api/v1/';
+$api_key = 'xxxxxx';
 
 $incident_prefix = '[Nagios]';
 $cachet_notify_subscribers = true; // Enable subscribers notifcation for incidents creation and updates
 $cachet_incident_visible = true;
-
 $cachet_component = $argv[1];
 $service_name = $argv[2];
 $service_status = $argv[3];
 $service_status_type = $argv[4];
 $service_output = $argv[5];
+$cachet_metric = $cachet_component;
+$cachet_metric_enabled = "no";
+
+if (strpos($cachet_component, '-m=true') !== false) {
+    $cachet_component = strtok($cachet_component, " ");
+    $cachet_metric = $cachet_component;
+    $service_output_exploded = preg_split('/ +/', $service_output);
+    $service_output_time = $service_output_exploded[9];
+    $cachet_metric_enabled = "yes";
+};
+
 
 define('CACHET_STATUS_INVESTIGATING', 1);
 define('CACHET_STATUS_IDENTIFIED', 2);
@@ -81,6 +91,27 @@ if ($cachet_component_id === false) {
 	exit(1);
 }
 
+
+/* Find Cachet metric ID */
+if ($cachet_metric_enabled == "yes") {
+      $result = cachet_query('metrics');
+      if ($result['code'] != 200) {
+            echo 'Can\'t query metrics' . "\n";
+            exit(1);
+      };
+      $cachet_metric_id = false;
+      foreach ($result['body']->data as $metric) {
+            if ($cachet_metric == $metric->name) { // We nailed it
+                  $cachet_metric_id = $metric->id;
+                  break; // Yes, bad.
+            };
+      };
+      if ($cachet_metric_id === false) {
+            echo 'Can\'t find metric "' . $cachet_metric . '"' . "\n";
+            exit(1);
+      };
+};
+
 /*
 Determine what to to:
  - if PROBLEM and SOFT then don't cry just yet
@@ -94,21 +125,58 @@ RECOVERY = OK
 if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_status_type == 'HARD')) { // Hope it will be back soon
 	//echo 'KO SOFT: not doing anything' . "\n";
 	//exit(0);
-        echo 'WARNING SOFT: creating incident' . "\n";
-        $query = array(
-                'name' => $incident_prefix . ' ' . $service_name,
-                'message' => $service_output,
-                'status' => CACHET_STATUS_WATCHING,
-                'visible' => $cachet_incident_visible,
-                'component_id' => $cachet_component_id,
-                'component_status' => CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES,
-                'notify' => $cachet_notify_subscribers,
-        );
-        $result = cachet_query('incidents', 'POST', $query);
+
+
+        echo 'WARNING SOFT: Verifying no prior incident exists' . "\n";
+
+        $results = cachet_query('incidents');
         if ($result['code'] != 200) {
-                echo 'Can\'t create incident' . "\n";
+                echo 'Can\'t get incidents' . "\n";
                 exit(1);
         }
+        $cachet_incident_id = false;
+        foreach ($results['body']->data as $incident) {
+                if (($incident->name == $incident_prefix . ' ' . $service_name) and ($incident->status == CACHET_STATUS_WATCHING)) {
+                        $cachet_incident_id = $incident->id;
+                        break; // Yes, bad.
+                }
+        }
+        //        echo 'Can\'t find incident "' . $incident_prefix . ' ' . $service_name . '"' . "\n";
+        //        exit(1);
+        //}
+        if ($cachet_incident_id === false) {
+                echo 'WARNING SOFT: creating incident' . "\n";
+                echo $cachet_incident_id;
+                $query = array(
+                        'name' => $incident_prefix . ' ' . $service_name,
+                        'message' => $service_output,
+                        'status' => CACHET_STATUS_WATCHING,
+                        'visible' => $cachet_incident_visible,
+                        'component_id' => $cachet_component_id,
+                        'component_status' => CACHET_COMPONENT_STATUS_PERFORMANCE_ISSUES,
+                        'notify' => $cachet_notify_subscribers,
+                );
+                $result = cachet_query('incidents', 'POST', $query);
+                if ($result['code'] != 200) {
+                        echo 'Can\'t create incident' . "\n";
+                exit(1);
+                };
+        };
+
+        /* Update Metric information */
+        if ($cachet_metric_enabled == "yes") {
+                $query = array(
+                'id' => $cachet_metric_id,
+                'value' => $service_output_time,
+                 //'timestamp' => date("Y-m-d H:m:s"),
+                 );
+                 $result = cachet_query('metrics/' . $cachet_metric_id . '/points', 'POST', $query);
+                 if ($result['code'] != 200) {
+                         echo 'Can\'t create metric' . "\n";
+                         exit(1);
+                 };
+        };
+
 } elseif ($service_status == 'CRITICAL' && $service_status_type == 'SOFT') { // Something went wrong, let's notify
 	echo 'KO HARD: creating incident' . "\n";
 	$query = array(
@@ -193,6 +261,21 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		echo 'Can\'t update incident' . "\n";
 		exit(1);
 	}
+
+        /* Update Cachet Metric */
+        if ($cachet_metric_enabled == "yes") {
+                $query = array(
+                'id' => $cachet_metric_id,
+                'value' => $service_output_time,
+                //'timestamp' => date("Y-m-d H:m:s"),
+                );
+                $result = cachet_query('metrics/' . $cachet_metric_id . '/points', 'POST', $query);
+                if ($result['code'] != 200) {
+                        echo 'Can\'t create metric' . "\n";
+                        exit(1);
+                };
+        };
+
 } elseif ($service_status == 'OK' && $service_status_type == 'HARD') { // Recovery completed
 	echo 'OK Hard: creating incident' . "\n";
 	$query = array(
@@ -232,8 +315,8 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 
 	/* Update the incident */
 	$query = array(
-		'name' => $incident_prefix . ' ' . $service_name,
-		'message' => $service_output,
+		//'name' => $incident_prefix . ' ' . $service_name,
+		//'message' => $service_output,
 		'status' => CACHET_STATUS_FIXED,
                 'visible' => $cachet_incident_visible,
 		'component_id' => $cachet_component_id,
@@ -246,6 +329,21 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 		echo 'Can\'t update incident' . "\n";
 		exit(1);
 	}
+
+        /* Update Cachet Metric */
+        if ($cachet_metric_update = "True") {
+                $query = array(
+                'id' => $cachet_metric_id,
+                'value' => $service_output_time,
+                //'timestamp' => date("Y-m-d H:m:s"),
+                );
+                $result = cachet_query('metrics/' . $cachet_metric_id . '/points', 'POST', $query);
+                if ($result['code'] != 200) {
+                        echo 'Can\'t create metric' . "\n";
+                        exit(1);
+                }
+        }
+
 } else {
 	echo 'Bad arguments' . "\n";
 	exit(1);
