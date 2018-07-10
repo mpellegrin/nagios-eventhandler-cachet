@@ -221,7 +221,7 @@ if ($service_status == 'WARNING' && ($service_status_type == 'SOFT' || $service_
 	foreach ($results['body']->data as $incident) {
 		if (($incident->name == $incident_prefix . ' ' . $service_name) and ($incident->status != CACHET_STATUS_FIXED)) {
 			$cachet_incident_id = $incident->id;
-			file_put_contents('/tmp/testing.txt', $cachet_indicent_id . "\n" . $incident->id);
+			file_put_contents('/tmp/testing.txt', $cachet_incident_id . "\n" . $incident->id);
 			break; // Yes, bad.
 		}
 	}
